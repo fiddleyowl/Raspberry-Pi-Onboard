@@ -141,7 +141,7 @@ def open_door():
             thread.start()
             return "Door opening."
         else:
-            return Response("Hash mismatches.\nShould be " + calculated_hash + ", but found " + plain_text_hash, status=403)
+            return Response("Hash mismatches.\nShould be " + calculated_hash + ", but found " + plain_text, status=403)
     else:
         if device_type != "iOS" and device_type != "Android":
             # Device type not found.
