@@ -70,9 +70,21 @@ def register_user():
 
 @api.route('/remove_user', methods=['GET'])
 def remove_user():
+    timestamp = int(request.args.get('timestamp'))
+    current_time = int(time.time())
+    if abs(current_time - timestamp) > 10:
+        return "Access denied."
+
+    signature = str(request.args.get('signature'))
     device_id = str(request.args.get('device_id'))
-    database_remove_user(device_id)
-    return "Removing user."
+    certificate = str(get_certificate(device_id))
+    pre_shared_secret = str(get_pre_shared_secret(device_id))
+    message = "Remove" + str(timestamp) + device_id + pre_shared_secret
+    if verify_signature(message, signature, certificate):
+        database_remove_user(device_id)
+        return "User removed."
+    else:
+        return "Failed to remove user."
 
 
 @api.route('/enable_user', methods=['GET'])
@@ -89,23 +101,23 @@ def disable_user():
     return "Disabling user."
 
 
-@api.route('/open', methods=['GET'])
+@api.route('/open_door', methods=['GET'])
 def open_door():
-    type = str(request.args.get('type'))
     timestamp = int(request.args.get('timestamp'))
-    signature = str(request.args.get('signature'))
     current_time = int(time.time())
     if abs(current_time - timestamp) > 10:
         return "Access denied."
 
-    if type is "Arduino":
+    type = str(request.args.get('type'))
+    signature = str(request.args.get('signature'))
+    if type == "Arduino":
         key = unhexlify(config['DEFAULT']['arduino_aes_key'])
         IV = unhexlify(config['DEFAULT']['arduino_aes_iv'])
         decipher = AES.new(key,AES.MODE_CBC,IV)
         cipher_text = unhexlify(signature)
         plain_text = decipher.decrypt(cipher_text)
-        calculated_hash = hashlib.sha256(str(timestamp + get_pre_shared_secret("Arduino")).encode()).hexdigest()
-        if plain_text is calculated_hash:
+        calculated_hash = hashlib.sha256(str("open" + str(timestamp) + get_pre_shared_secret("Arduino")).encode()).hexdigest()
+        if plain_text == calculated_hash:
             thread = Thread(target=drive_motor, args=[])
             thread.start()
             return "Door opening."
@@ -117,8 +129,11 @@ def open_door():
         pre_shared_secret = str(get_pre_shared_secret(device_id))
         message = str(timestamp) + device_id + pre_shared_secret
         if verify_signature(message, signature, certificate):
-            thread = Thread(target=drive_motor, args=[])
-            thread.start()
+            if get_enabled(device_id):
+                thread = Thread(target=drive_motor, args=[])
+                thread.start()
+            else:
+                return "Access denied."
             return "Door opening."
         else:
             return "Access denied."
