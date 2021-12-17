@@ -73,7 +73,7 @@ def remove_user():
     timestamp = int(request.args.get('timestamp'))
     current_time = int(time.time())
     if abs(current_time - timestamp) > 10:
-        return "Access denied."
+        return Response("Access denied.\n", status=403)
 
     signature = str(request.args.get('signature'))
     device_id = str(request.args.get('device_id'))
@@ -105,21 +105,21 @@ def disable_user():
 def open_door():
     timestamp = request.args.get('timestamp')
     if timestamp is None:
-        return "Access denied."
+        return Response("Access denied.\n", status=403)
     timestamp = int(timestamp)
 
     current_time = int(time.time())
     if abs(current_time - timestamp) > 10:
-        return "Access denied."
+        return Response("Access denied.\n", status=403)
 
     device_type = request.args.get('type')
     if device_type is None:
-        return "Access denied."
+        return Response("Access denied.\n", status=403)
     device_type = str(device_type)
 
     signature = request.args.get('signature')
     if signature is None:
-        return "Access denied."
+        return Response("Access denied.\n", status=403)
     signature = str(signature)
 
     if device_type == "Arduino":
@@ -134,25 +134,25 @@ def open_door():
             thread.start()
             return "Door opening."
         else:
-            return "Access denied."
+            return Response("Access denied.\n", status=403)
     else:
         if device_type != "iOS" and device_type != "Android":
             # Device type not found.
-            return "Access denied."
+            return Response("Access denied.\n", status=403)
         device_id = request.args.get('device_id')
         if device_id is None:
             # Device id not found in parameters.
-            return "Access denied."
+            return Response("Access denied.\n", status=403)
         device_id = str(device_id)
 
         certificate = get_certificate(device_id)
         if certificate is None:
-            return "Access denied."
+            return Response("Access denied.\n", status=403)
         certificate = str(certificate)
 
         pre_shared_secret = get_pre_shared_secret(device_id)
         if pre_shared_secret is None:
-            return "Access denied."
+            return Response("Access denied.\n", status=403)
         pre_shared_secret = str(pre_shared_secret)
 
         message = str(timestamp) + device_id + pre_shared_secret
@@ -161,10 +161,10 @@ def open_door():
                 thread = Thread(target=drive_motor, args=[])
                 thread.start()
             else:
-                return "Access denied."
+                return Response("Access denied.\n", status=403)
             return "Door opening."
         else:
-            return "Access denied."
+            return Response("Access denied.\n", status=403)
 
 
 def drive_motor():
