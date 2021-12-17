@@ -51,11 +51,14 @@ def try_user_data(device_id):
     query = str("SELECT `type`, `device_id`, `pre_shared_secret`, `enabled`, `certificate` FROM `users` "
              "WHERE `device_id` = '%s'" % str(device_id))
     cursor.execute(query)
-    return cursor.fetchall()
+    dataset = cursor.fetchall()
+    print(dataset)
+    return dataset
 
 
 def get_user_data(device_id):
-    return try_user_data(device_id)[0]
+    user_data = try_user_data(device_id)[0]
+    return user_data
 
 
 def is_user_valid(device_id):
