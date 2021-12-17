@@ -24,9 +24,8 @@ def database_add_user(type, device_id, pre_shared_secret, certificate):
 
 def database_remove_user(device_id):
     query = ("DELETE FROM `users` "
-                 "WHERE `device_id` = %s")
-    data = str(device_id)
-    cursor.execute(query, data)
+                 "WHERE `device_id` = "+str(device_id))
+    cursor.execute(query)
     cnx.commit()
 
 
@@ -34,9 +33,8 @@ def database_enable_user(device_id):
     # UPDATE `users` SET `enabled` = '1' WHERE `users`.`id` = 1
     query = ("UPDATE `users` "
                  "SET `enabled` = 1"
-                 "WHERE `device_id` = %s")
-    data = str(device_id)
-    cursor.execute(query, data)
+                 "WHERE `device_id` = " + str(device_id))
+    cursor.execute(query)
     cnx.commit()
 
 
@@ -44,17 +42,15 @@ def database_disable_user(device_id):
     # UPDATE `users` SET `enabled` = '1' WHERE `users`.`id` = 1
     query = ("UPDATE `users` "
                  "SET `enabled` = 0"
-                 "WHERE `device_id` = %s")
-    data = str(device_id)
-    cursor.execute(query, data)
+                 "WHERE `device_id` = " + str(device_id))
+    cursor.execute(query)
     cnx.commit()
 
 
 def try_user_data(device_id):
     query = ("SELECT type, device_id, pre_shared_secret, enabled, certificate FROM users "
-             "WHERE device_id = %s")
-    data = str(device_id)
-    cursor.execute(query, data)
+             "WHERE device_id = " + str(device_id))
+    cursor.execute(query)
     return cursor.fetchall()
 
 
