@@ -71,7 +71,7 @@ def register_user():
 @api.route('/remove_user', methods=['GET'])
 def remove_user():
     timestamp = int(request.args.get('timestamp', type=int))
-    current_time = int(time.time())
+    current_time = round(time.time() * 1000)
     if abs(current_time - timestamp) > 10:
         return Response("Request expired.\n", status=403)
 
@@ -108,8 +108,8 @@ def open_door():
         return Response("Time is required.\n", status=403)
     timestamp = int(timestamp)
 
-    current_time = int(time.time())
-    if abs(current_time - timestamp) > 10:
+    current_time = round(time.time() * 1000)
+    if abs(current_time - timestamp) > 10000:
         return Response("Request expired.\n", status=403)
 
     device_type = request.args.get('type', type=str)
