@@ -52,20 +52,16 @@ def try_user_data(device_id):
              "WHERE `device_id` = '%s'" % str(device_id))
     cursor.execute(query)
     dataset = cursor.fetchall()
-    print(dataset)
     return dataset
 
 
 def get_user_data(device_id):
     user_data = try_user_data(device_id)[0]
-    print(user_data)
     return user_data
 
 
 def is_user_valid(device_id):
     result = try_user_data(device_id)
-    print(result)
-    print(len(result))
     if len(result) == 1:
         return True
     return False
