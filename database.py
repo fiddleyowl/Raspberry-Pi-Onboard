@@ -55,6 +55,7 @@ def try_user_data(device_id):
              "WHERE `device_id` = '%s'")
     data = str(device_id)
     cursor.execute(query, data)
+    print(cursor.fetchall())
     return cursor.fetchall()
 
 
