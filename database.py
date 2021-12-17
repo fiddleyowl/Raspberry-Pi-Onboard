@@ -58,11 +58,13 @@ def try_user_data(device_id):
 
 def get_user_data(device_id):
     user_data = try_user_data(device_id)[0]
+    print(user_data)
     return user_data
 
 
 def is_user_valid(device_id):
     result = try_user_data(device_id)
+    print(result)
     if len(result) != 0:
         return False
     return True
