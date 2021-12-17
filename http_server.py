@@ -1,5 +1,5 @@
 from flask import Flask, request, Response
-import urllib.parse
+import urllib
 import time
 import hashlib
 from Crypto.Cipher import AES
@@ -55,12 +55,12 @@ def reverse_move():
 
 @api.route('/register_user', methods=['GET'])
 def register_user():
-    type = request.args.get('type')
+    device_type = request.args.get('type')
     device_id = request.args.get('device_id')
     pre_shared_secret = request.args.get('pre_shared_secret')
     certificate = urllib.request.unquote(request.args.get('certificate'))
     if verify_client_certificate(certificate):
-        database_add_user(type, device_id, pre_shared_secret, certificate)
+        database_add_user(device_type, device_id, pre_shared_secret, certificate)
         return "Successfully added user."
         # return Response("{'status':'0', 'msg':'User added.'}", status=200, mimetype='application/json')
     else:
@@ -103,14 +103,26 @@ def disable_user():
 
 @api.route('/open_door', methods=['GET'])
 def open_door():
-    timestamp = int(request.args.get('timestamp'))
+    timestamp = request.args.get('timestamp')
+    if timestamp is None:
+        return "Access denied."
+    timestamp = int(timestamp)
+
     current_time = int(time.time())
     if abs(current_time - timestamp) > 10:
         return "Access denied."
 
-    type = str(request.args.get('type'))
-    signature = str(request.args.get('signature'))
-    if type == "Arduino":
+    device_type = request.args.get('type')
+    if device_type is None:
+        return "Access denied."
+    device_type = str(device_type)
+
+    signature = request.args.get('signature')
+    if signature is None:
+        return "Access denied."
+    signature = str(signature)
+
+    if device_type == "Arduino":
         key = unhexlify(config['DEFAULT']['arduino_aes_key'])
         IV = unhexlify(config['DEFAULT']['arduino_aes_iv'])
         decipher = AES.new(key,AES.MODE_CBC,IV)
@@ -124,11 +136,25 @@ def open_door():
         else:
             return "Access denied."
     else:
-        if type != "iOS" and type != "Android":
+        if device_type != "iOS" and device_type != "Android":
+            # Device type not found.
             return "Access denied."
-        device_id = str(request.args.get('device_id'))
-        certificate = str(get_certificate(device_id))
-        pre_shared_secret = str(get_pre_shared_secret(device_id))
+        device_id = request.args.get('device_id')
+        if device_id is None:
+            # Device id not found in parameters.
+            return "Access denied."
+        device_id = str(device_id)
+
+        certificate = get_certificate(device_id)
+        if certificate is None:
+            return "Access denied."
+        certificate = str(certificate)
+
+        pre_shared_secret = get_pre_shared_secret(device_id)
+        if pre_shared_secret is None:
+            return "Access denied."
+        pre_shared_secret = str(pre_shared_secret)
+
         message = str(timestamp) + device_id + pre_shared_secret
         if verify_signature(message, signature, certificate):
             if get_enabled(device_id):
