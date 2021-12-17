@@ -126,8 +126,15 @@ def open_door():
         key = unhexlify(config['DEFAULT']['arduino_aes_key'])
         IV = unhexlify(config['DEFAULT']['arduino_aes_iv'])
         decipher = AES.new(key,AES.MODE_CBC,IV)
-        cipher_text = unhexlify(signature)
-        plain_text = decipher.decrypt(cipher_text)
+        try:
+            cipher_text = unhexlify(signature)
+        except:
+            return Response("Signature is not a valid hexadecimal string.\n", status=403)
+        try:
+            plain_text = decipher.decrypt(cipher_text)
+        except:
+            return Response("Signature is not valid.\n", status=403)
+
         calculated_hash = hashlib.sha256(str("open" + str(timestamp) + get_pre_shared_secret("Arduino")).encode()).hexdigest()
         if plain_text == calculated_hash:
             thread = Thread(target=drive_motor, args=[])
