@@ -131,9 +131,7 @@ def open_door():
         except:
             return Response("Signature is not a valid hexadecimal string.\n", status=403)
         try:
-            plain_text = decipher.decrypt(cipher_text).hex()
-            padding_bytes = plain_text[-1]
-            plain_text = plain_text[:-padding_bytes]
+            plain_text = decipher.decrypt(cipher_text).hex()[:64]
         except:
             return Response("Signature is not valid.\n", status=403)
 
