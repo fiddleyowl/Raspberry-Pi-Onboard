@@ -52,8 +52,9 @@ def database_disable_user(device_id):
 
 def try_user_data(device_id):
     query = ("SELECT `type`, `device_id`, `pre_shared_secret`, `enabled`, `certificate` FROM `users` "
-             "WHERE `device_id` = '" + str(device_id) + "'")
-    cursor.execute(query)
+             "WHERE `device_id` = %s")
+    data = str(device_id)
+    cursor.execute(query, data)
     dataset = cursor.fetchall()
     print(dataset)
     return dataset
