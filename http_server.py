@@ -135,13 +135,13 @@ def open_door():
         except:
             return Response("Signature is not valid.\n", status=403)
 
-        calculated_hash = hashlib.sha256(str("open" + str(timestamp) + get_pre_shared_secret("Arduino")).encode()).hexdigest()
-        if plain_text == calculated_hash:
+        calculated_hash = hashlib.sha256(str("Open" + str(timestamp) + get_pre_shared_secret("Arduino")).encode()).hexdigest()
+        if plain_text.decode() == calculated_hash:
             thread = Thread(target=drive_motor, args=[])
             thread.start()
             return "Door opening."
         else:
-            return Response("Hash mismatches.\nShould be " + calculated_hash + ", but found " + plain_text, status=403)
+            return Response("Hash mismatches.\nShould be " + calculated_hash + ", but found " + plain_text.decode(), status=403)
     else:
         if device_type != "iOS" and device_type != "Android":
             # Device type not found.
@@ -158,9 +158,9 @@ def open_door():
             if get_enabled(device_id):
                 thread = Thread(target=drive_motor, args=[])
                 thread.start()
+                return "Door opening."
             else:
                 return Response("User is disabled.\n", status=403)
-            return "Door opening."
         else:
             return Response("Signature verification failed.\n", status=403)
 
