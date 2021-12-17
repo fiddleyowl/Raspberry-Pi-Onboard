@@ -17,8 +17,8 @@ api = Flask(__name__)
 
 @api.route('/forward', methods=['GET'])
 def forward_move():
-    rev_per_second = float(request.args.get('rev'))
-    run_time = float(request.args.get('time'))
+    rev_per_second = float(request.args.get('rev', type=float))
+    run_time = float(request.args.get('time', type=float))
     if rev_per_second < 0:
         return "rev must be greater than 0."
     if rev_per_second > 2:
@@ -36,8 +36,8 @@ def forward_move():
 
 @api.route('/reverse', methods=['GET'])
 def reverse_move():
-    rev_per_second = float(request.args.get('rev'))
-    run_time = float(request.args.get('time'))
+    rev_per_second = float(request.args.get('rev', type=float))
+    run_time = float(request.args.get('time', type=float))
     if rev_per_second < 0:
         return "rev must be greater than 0."
     if rev_per_second > 2:
@@ -55,9 +55,9 @@ def reverse_move():
 
 @api.route('/register_user', methods=['GET'])
 def register_user():
-    device_type = request.args.get('type')
-    device_id = request.args.get('device_id')
-    pre_shared_secret = request.args.get('pre_shared_secret')
+    device_type = request.args.get('type', type=str)
+    device_id = request.args.get('device_id', type=str)
+    pre_shared_secret = request.args.get('pre_shared_secret', type=str)
     certificate = urllib.request.unquote(request.args.get('certificate'))
     if verify_client_certificate(certificate):
         database_add_user(device_type, device_id, pre_shared_secret, certificate)
@@ -70,13 +70,13 @@ def register_user():
 
 @api.route('/remove_user', methods=['GET'])
 def remove_user():
-    timestamp = int(request.args.get('timestamp'))
+    timestamp = int(request.args.get('timestamp', type=int))
     current_time = int(time.time())
     if abs(current_time - timestamp) > 10:
         return Response("Access denied.\n", status=403)
 
     signature = str(request.args.get('signature'))
-    device_id = str(request.args.get('device_id'))
+    device_id = str(request.args.get('device_id', type=str))
     certificate = str(get_certificate(device_id))
     pre_shared_secret = str(get_pre_shared_secret(device_id))
     message = "Remove" + str(timestamp) + device_id + pre_shared_secret
@@ -89,21 +89,21 @@ def remove_user():
 
 @api.route('/enable_user', methods=['GET'])
 def enable_user():
-    device_id = str(request.args.get('device_id'))
+    device_id = str(request.args.get('device_id', type=str))
     database_enable_user(device_id)
     return "Enabling user."
 
 
 @api.route('/disable_user', methods=['GET'])
 def disable_user():
-    device_id = str(request.args.get('device_id'))
+    device_id = str(request.args.get('device_id', type=str))
     database_disable_user(device_id)
     return "Disabling user."
 
 
 @api.route('/open_door', methods=['GET'])
 def open_door():
-    timestamp = request.args.get('timestamp')
+    timestamp = request.args.get('timestamp', type=int)
     if timestamp is None:
         return Response("Access denied.\n", status=403)
     timestamp = int(timestamp)
@@ -112,12 +112,12 @@ def open_door():
     if abs(current_time - timestamp) > 10:
         return Response("Access denied.\n", status=403)
 
-    device_type = request.args.get('type')
+    device_type = request.args.get('type', type=str)
     if device_type is None:
         return Response("Access denied.\n", status=403)
     device_type = str(device_type)
 
-    signature = request.args.get('signature')
+    signature = request.args.get('signature', type=str)
     if signature is None:
         return Response("Access denied.\n", status=403)
     signature = str(signature)
@@ -139,22 +139,13 @@ def open_door():
         if device_type != "iOS" and device_type != "Android":
             # Device type not found.
             return Response("Access denied.\n", status=403)
-        device_id = request.args.get('device_id')
+        device_id = request.args.get('device_id', type=str)
         if device_id is None:
             # Device id not found in parameters.
             return Response("Access denied.\n", status=403)
         device_id = str(device_id)
-
-        certificate = get_certificate(device_id)
-        if certificate is None:
-            return Response("Access denied.\n", status=403)
-        certificate = str(certificate)
-
-        pre_shared_secret = get_pre_shared_secret(device_id)
-        if pre_shared_secret is None:
-            return Response("Access denied.\n", status=403)
-        pre_shared_secret = str(pre_shared_secret)
-
+        certificate = str(get_certificate(device_id))
+        pre_shared_secret = str(get_pre_shared_secret(device_id))
         message = str(timestamp) + device_id + pre_shared_secret
         if verify_signature(message, signature, certificate):
             if get_enabled(device_id):
