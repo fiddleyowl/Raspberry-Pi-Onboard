@@ -124,6 +124,8 @@ def open_door():
         else:
             return "Access denied."
     else:
+        if type != "iOS" and type != "Android":
+            return "Access denied."
         device_id = str(request.args.get('device_id'))
         certificate = str(get_certificate(device_id))
         pre_shared_secret = str(get_pre_shared_secret(device_id))
