@@ -131,13 +131,12 @@ def open_door():
         except:
             return Response("Signature is not a valid hexadecimal string.\n", status=403)
         try:
-            plain_text = decipher.decrypt(cipher_text)
-            plain_text_hash = hashlib.sha256(plain_text).hexdigest()
+            plain_text = decipher.decrypt(cipher_text).hex()
         except:
             return Response("Signature is not valid.\n", status=403)
 
         calculated_hash = hashlib.sha256(str("Open" + str(timestamp) + get_pre_shared_secret("Arduino")).encode()).hexdigest()
-        if plain_text_hash == calculated_hash:
+        if plain_text == calculated_hash:
             thread = Thread(target=drive_motor, args=[])
             thread.start()
             return "Door opening."
