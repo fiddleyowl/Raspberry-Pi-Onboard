@@ -137,6 +137,7 @@ def open_door():
             return Response("Signature is not valid.\n", status=403)
 
         calculated_hash = hashlib.sha256(str("Open" + str(timestamp) + get_pre_shared_secret("Arduino")).encode()).hexdigest()
+        print("calculated string: " + str("Open" + str(timestamp) + get_pre_shared_secret("Arduino")))
         if plain_text_hash == calculated_hash:
             thread = Thread(target=drive_motor, args=[])
             thread.start()
