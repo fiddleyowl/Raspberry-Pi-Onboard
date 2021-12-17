@@ -109,7 +109,7 @@ def open_door():
     timestamp = int(timestamp)
 
     current_time = round(time.time() * 1000)
-    if abs(current_time - timestamp) > 10000:
+    if abs(current_time - timestamp) > 100000:
         return Response("Request expired.\n", status=403)
 
     device_type = request.args.get('type', type=str)
