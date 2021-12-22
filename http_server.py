@@ -109,7 +109,7 @@ def open_door():
     timestamp = int(timestamp)
 
     current_time = round(time.time() * 1000)
-    if abs(current_time - timestamp) > 100000:
+    if abs(current_time - timestamp) > 5000:
         return Response("Request expired.\n", status=403)
 
     device_type = request.args.get('type', type=str)
@@ -154,6 +154,7 @@ def open_door():
         certificate = str(get_certificate(device_id))
         pre_shared_secret = str(get_pre_shared_secret(device_id))
         message = str(timestamp) + device_id + pre_shared_secret
+        signature = unhexlify(signature)
         if verify_signature(message, signature, certificate):
             if get_enabled(device_id):
                 thread = Thread(target=drive_motor, args=[])
