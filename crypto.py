@@ -27,11 +27,12 @@ def verify_client_certificate(client_certificate_text):
 def verify_signature(message, signature, certificate):
     message = bytearray(message, "utf8")
     public_key = RSA.import_key(certificate)
-    verifier = PKCS115_SigScheme(public_key)
+    # verifier = PKCS115_SigScheme(public_key)
     # calculated_hash = SHA256.new(message)
     try:
+        pkcs1_15.new(public_key).verify(message, signature)
         # verifier.verify(calculated_hash, signature)
-        verifier.verify(message, signature)
+        # verifier.verify(message, signature)
         return True
     except:
         return False
