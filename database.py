@@ -83,6 +83,7 @@ def get_enabled(device_id):
     if not is_user_valid(device_id):
         return False
     value = get_user_data(device_id)[3]
+    print("enable value" + str(value))
     if value == 1:
         return True
     return False
