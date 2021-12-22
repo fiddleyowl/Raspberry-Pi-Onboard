@@ -25,7 +25,7 @@ def verify_client_certificate(client_certificate_text):
 
 
 def verify_signature(message, signature, certificate):
-    message = bytearray(message, "utf8")
+    message = bytearray(message, "utf-8")
     public_key = RSA.import_key(certificate)
     # verifier = PKCS115_SigScheme(public_key)
     # calculated_hash = SHA256.new(message)
