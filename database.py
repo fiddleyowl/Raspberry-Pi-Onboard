@@ -52,6 +52,7 @@ def try_user_data(device_id):
              "WHERE `device_id` = '%s'" % str(device_id))
     cursor.execute(query)
     dataset = cursor.fetchall()
+    cursor.commit()
     return dataset
 
 
