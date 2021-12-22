@@ -73,7 +73,7 @@ def remove_user():
     timestamp = int(request.args.get('timestamp', type=int))
     current_time = round(time.time() * 1000)
     if abs(current_time - timestamp) > 10:
-        return Response("Request expired.\n", status=403)
+        return Response("Request expired.", status=403)
 
     signature = str(request.args.get('signature', type=str))
     device_id = str(request.args.get('device_id', type=str))
@@ -105,21 +105,21 @@ def disable_user():
 def open_door():
     timestamp = request.args.get('timestamp', type=int)
     if timestamp is None:
-        return Response("Time is required.\n", status=403)
+        return Response("Time is required.", status=403)
     timestamp = int(timestamp)
 
     current_time = round(time.time() * 1000)
     if abs(current_time - timestamp) > 5000:
-        return Response("Request expired.\n", status=403)
+        return Response("Request expired.", status=403)
 
     device_type = request.args.get('type', type=str)
     if device_type is None:
-        return Response("Device type is required.\n", status=403)
+        return Response("Device type is required.", status=403)
     device_type = str(device_type)
 
     signature = request.args.get('signature', type=str)
     if signature is None:
-        return Response("Signature is required.\n", status=403)
+        return Response("Signature is required.", status=403)
     signature = str(signature)
 
     if device_type == "Arduino":
@@ -129,11 +129,11 @@ def open_door():
         try:
             cipher_text = unhexlify(signature)
         except:
-            return Response("Signature is not a valid hexadecimal string.\n", status=403)
+            return Response("Signature is not a valid hexadecimal string.", status=403)
         try:
             plain_text = decipher.decrypt(cipher_text).hex()[:64]
         except:
-            return Response("Signature is not valid.\n", status=403)
+            return Response("Signature is not valid.", status=403)
 
         calculated_hash = hashlib.sha256(str("Open" + str(timestamp) + get_pre_shared_secret("Arduino")).encode()).hexdigest()
         if plain_text == calculated_hash:
@@ -141,15 +141,15 @@ def open_door():
             thread.start()
             return "Door opening."
         else:
-            return Response("Hash mismatches.\nShould be " + calculated_hash + ", but found " + plain_text + ".\n", status=403)
+            return Response("Hash mismatches.\nShould be " + calculated_hash + ", but found " + plain_text + ".", status=403)
     else:
         if device_type != "iOS" and device_type != "Android":
             # Device type not found.
-            return Response("Device type not found.\n", status=403)
+            return Response("Device type not found.", status=403)
         device_id = request.args.get('device_id', type=str)
         if device_id is None:
             # Device id not found in parameters.
-            return Response("Device id is required.\n", status=403)
+            return Response("Device id is required.", status=403)
         device_id = str(device_id)
         certificate = str(get_certificate(device_id))
         pre_shared_secret = str(get_pre_shared_secret(device_id))
@@ -160,11 +160,11 @@ def open_door():
             if get_enabled(device_id):
                 thread = Thread(target=drive_motor, args=[])
                 thread.start()
-                return "Door opening.\n"
+                return "Door opening."
             else:
-                return Response("User is disabled.\n", status=403)
+                return Response("User is disabled.", status=403)
         else:
-            return Response("Signature verification failed.\n", status=403)
+            return Response("Signature verification failed.", status=403)
 
 
 def drive_motor():
