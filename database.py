@@ -10,7 +10,6 @@ database_name = config['DEFAULT']['database_name']
 cnx = mysql.connector.connect(user=username, password=password,
                               host='127.0.0.1',
                               database=database_name)
-cursor = cnx.cursor()
 
 
 def database_add_user(type, device_id, pre_shared_secret, certificate):
@@ -18,14 +17,14 @@ def database_add_user(type, device_id, pre_shared_secret, certificate):
                  "(type, device_id, pre_shared_secret, certificate) "
                  "VALUES (%s, %s, %s, %s)")
     data = (type, device_id, pre_shared_secret, certificate)
-    cursor.execute(query, data)
+    cnx.cursor().execute(query, data)
     cnx.commit()
 
 
 def database_remove_user(device_id):
     query = str("DELETE FROM `users` "
                  "WHERE `device_id` = '%s'" % str(device_id))
-    cursor.execute(query)
+    cnx.cursor().execute(query)
     cnx.commit()
 
 
@@ -34,7 +33,7 @@ def database_enable_user(device_id):
     query = str("UPDATE `users` "
                  "SET `enabled` = 1"
                  "WHERE `device_id` = '%s'" % str(device_id))
-    cursor.execute(query)
+    cnx.cursor().execute(query)
     cnx.commit()
 
 
@@ -43,14 +42,15 @@ def database_disable_user(device_id):
     query = str("UPDATE `users` "
                  "SET `enabled` = 0"
                  "WHERE `device_id` = '%s'" % str(device_id))
-    cursor.execute(query)
+    cnx.cursor().execute(query)
     cnx.commit()
 
 
 def try_user_data(device_id):
+    cursor = cnx.cursor()
     query = str("SELECT `type`, `device_id`, `pre_shared_secret`, `enabled`, `certificate` FROM `users` "
              "WHERE `device_id` = '%s'" % str(device_id))
-    cursor.execute(query)
+    cnx.cursor().execute(query)
     dataset = cursor.fetchall()
     return dataset
 
@@ -83,7 +83,6 @@ def get_enabled(device_id):
     if not is_user_valid(device_id):
         return False
     value = get_user_data(device_id)[3]
-    print("enable value" + str(value))
     if value == 1:
         return True
     return False

@@ -141,7 +141,7 @@ def open_door():
             thread.start()
             return "Door opening."
         else:
-            return Response("Hash mismatches.\nShould be " + calculated_hash + ", but found " + plain_text, status=403)
+            return Response("Hash mismatches.\nShould be " + calculated_hash + ", but found " + plain_text + ".\n", status=403)
     else:
         if device_type != "iOS" and device_type != "Android":
             # Device type not found.
@@ -154,13 +154,13 @@ def open_door():
         certificate = str(get_certificate(device_id))
         pre_shared_secret = str(get_pre_shared_secret(device_id))
         message = "Open" + str(timestamp) + device_id + pre_shared_secret
-        print(message)
+        # print(message)
         signature = unhexlify(signature)
         if verify_signature(message, signature, certificate):
             if get_enabled(device_id):
                 thread = Thread(target=drive_motor, args=[])
                 thread.start()
-                return "Door opening."
+                return "Door opening.\n"
             else:
                 return Response("User is disabled.\n", status=403)
         else:
