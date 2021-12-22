@@ -56,7 +56,8 @@ def try_user_data(device_id):
 
 
 def get_user_data(device_id):
-    user_data = try_user_data(device_id)[0]
+    all_data = try_user_data(device_id)
+    user_data = all_data[len(all_data)-1]
     return user_data
 
 
