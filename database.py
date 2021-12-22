@@ -50,7 +50,7 @@ def try_user_data(device_id):
     cursor = cnx.cursor()
     query = str("SELECT `type`, `device_id`, `pre_shared_secret`, `enabled`, `certificate` FROM `users` "
              "WHERE `device_id` = '%s'" % str(device_id))
-    cnx.cursor().execute(query)
+    cursor.execute(query)
     dataset = cursor.fetchall()
     return dataset
 
