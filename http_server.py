@@ -154,6 +154,7 @@ def open_door():
         certificate = str(get_certificate(device_id))
         pre_shared_secret = str(get_pre_shared_secret(device_id))
         message = "Open" + str(timestamp) + device_id + pre_shared_secret
+        print(message)
         signature = unhexlify(signature)
         if verify_signature(message, signature, certificate):
             if get_enabled(device_id):
