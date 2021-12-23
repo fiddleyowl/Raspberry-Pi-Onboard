@@ -169,6 +169,7 @@ def open_door():
         signature = unhexlify(signature)
         if verify_signature(message, signature, certificate):
             if get_enabled(device_id):
+                mark_operation_as_succeeded(system_time)
                 thread = Thread(target=drive_motor, args=[])
                 thread.start()
                 return "Door opening."
