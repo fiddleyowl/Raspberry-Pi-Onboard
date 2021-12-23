@@ -99,7 +99,7 @@ def get_certificate(device_id):
 def log_operation(system_time, remote_ip, raw_request, query_time, type, device_id, operation):
     sql_query = ("INSERT INTO `log` "
              "(system_time, remote_ip, raw_request, query_time, type, device_id, operation, result) "
-             "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)")
+             "VALUES (UNIX_TIMESTAMP(%s), %s, %s, UNIX_TIMESTAMP(%s), %s, %s, %s, %s)")
     data = (system_time, remote_ip, raw_request, query_time, type, device_id, operation, 0)
     cnx.cursor().execute(sql_query, data)
     cnx.commit()
