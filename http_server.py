@@ -153,7 +153,7 @@ def open_door():
         device_id = str(device_id)
         certificate = str(get_certificate(device_id))
         certificate_x509 = load_certificate(FILETYPE_PEM, certificate.encode())
-        common_name = str(certificate_x509.get_subject().cn)
+        common_name = str(certificate_x509.get_subject().CN)
         if common_name != device_id:
             return Response("Common name mismatches.", status=403)
         pre_shared_secret = str(get_pre_shared_secret(device_id))
