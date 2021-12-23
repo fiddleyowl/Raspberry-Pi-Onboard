@@ -4,7 +4,6 @@ from Crypto.Signature import pkcs1_15
 from Crypto.Hash import SHA256
 
 store = X509Store()
-
 ca_certificate_bytes = open("Door_Lock_CA.crt", "rb")
 ca_certificate = load_certificate(FILETYPE_PEM, ca_certificate_bytes.read())
 store.add_cert(ca_certificate)
@@ -32,5 +31,3 @@ def verify_signature(message, signature, certificate):
         return True
     except:
         return False
-
-

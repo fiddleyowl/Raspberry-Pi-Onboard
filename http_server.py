@@ -1,16 +1,14 @@
-from flask import Flask, request, Response
-import urllib
-import time
 import hashlib
-from Crypto.Cipher import AES
-from OpenSSL.crypto import FILETYPE_PEM, load_certificate
-from binascii import hexlify, unhexlify
+import urllib
+from binascii import unhexlify
 from threading import Thread
 
+from Crypto.Cipher import AES
+from flask import Flask, request, Response
 
-from motor_control import *
-from database import *
 from crypto import *
+from database import *
+from motor_control import *
 
 api = Flask(__name__)
 
