@@ -3,7 +3,7 @@ import urllib
 import time
 import hashlib
 from Crypto.Cipher import AES
-import Crypto.Cipher.AES
+from OpenSSL.crypto import FILETYPE_PEM, load_certificate
 from binascii import hexlify, unhexlify
 from threading import Thread
 
@@ -152,6 +152,10 @@ def open_door():
             return Response("Device id is required.", status=403)
         device_id = str(device_id)
         certificate = str(get_certificate(device_id))
+        certificate_x509 = load_certificate(FILETYPE_PEM, bytearray(certificate))
+        common_name = str(certificate_x509.get_subject().cn)
+        if common_name != device_id:
+            return Response("Common name mismatches.", status=403)
         pre_shared_secret = str(get_pre_shared_secret(device_id))
         message = "Open" + str(timestamp) + device_id + pre_shared_secret
         # print(message)
