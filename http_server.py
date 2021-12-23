@@ -73,14 +73,14 @@ def register_user():
         # return Response("{'status':'-1', 'msg':'Information is invalid.'}", status=403, mimetype='application/json')
 
 
-@api.route('/enable_user', methods=['GET'])
+# @api.route('/enable_user', methods=['GET'])
 def enable_user():
     device_id = str(request.args.get('device_id', type=str))
     database_enable_user(device_id)
     return "Enabling user."
 
 
-@api.route('/disable_user', methods=['GET'])
+# @api.route('/disable_user', methods=['GET'])
 def disable_user():
     device_id = str(request.args.get('device_id', type=str))
     database_disable_user(device_id)
