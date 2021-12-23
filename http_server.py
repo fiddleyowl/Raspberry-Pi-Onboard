@@ -163,6 +163,8 @@ def open_door():
             # Device id not found in parameters.
             return Response("Device id is required.", status=403)
         device_id = str(device_id)
+        if not is_user_valid(device_id):
+            return Response("Device not found.", status=403)
         certificate = str(get_certificate(device_id))
         certificate_x509 = load_certificate(FILETYPE_PEM, certificate.encode())
         common_name = str(certificate_x509.get_subject().CN)
@@ -220,6 +222,9 @@ def deactivate_device():
         # Device id not found in parameters.
         return Response("Device id is required.", status=403)
     device_id = str(device_id)
+    if not is_user_valid(device_id):
+        return Response("Device not found.", status=403)
+
     certificate = str(get_certificate(device_id))
     certificate_x509 = load_certificate(FILETYPE_PEM, certificate.encode())
     common_name = str(certificate_x509.get_subject().CN)
