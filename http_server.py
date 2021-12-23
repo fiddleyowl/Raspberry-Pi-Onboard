@@ -5,10 +5,12 @@ from threading import Thread
 
 from Crypto.Cipher import AES
 from flask import Flask, request, Response
+from werkzeug.urls import iri_to_uri
 
 from crypto import *
 from database import *
 from motor_control import *
+
 
 api = Flask(__name__)
 
@@ -99,21 +101,28 @@ def disable_user():
 
 @api.route('/open_door', methods=['GET'])
 def open_door():
+    system_time = round(time.time() * 1000)
+    remote_ip = request.remote_addr
+    raw_request = iri_to_uri(request.url)
+
     timestamp = request.args.get('timestamp', type=int)
+    device_type = request.args.get('type', type=str)
+    signature = request.args.get('signature', type=str)
+    device_id = request.args.get('device_id', type=str)
+
+    log_operation(system_time, remote_ip, raw_request, timestamp, device_type, device_id, 'open_door')
+
     if timestamp is None:
         return Response("Time is required.", status=403)
     timestamp = int(timestamp)
 
-    current_time = round(time.time() * 1000)
-    if abs(current_time - timestamp) > 5000:
+    if abs(system_time - timestamp) > 5000:
         return Response("Request expired.", status=403)
 
-    device_type = request.args.get('type', type=str)
     if device_type is None:
         return Response("Device type is required.", status=403)
     device_type = str(device_type)
 
-    signature = request.args.get('signature', type=str)
     if signature is None:
         return Response("Signature is required.", status=403)
     signature = str(signature)
@@ -136,6 +145,7 @@ def open_door():
         if plain_text == calculated_hash:
             thread = Thread(target=drive_motor, args=[])
             thread.start()
+            mark_operation_as_succeeded(system_time)
             return "Door opening."
         else:
             return Response("Hash mismatches.\nShould be " + calculated_hash + ", but found " + plain_text + ".",
@@ -144,7 +154,6 @@ def open_door():
         if device_type != "iOS" and device_type != "Android":
             # Device type not found.
             return Response("Device type not found.", status=403)
-        device_id = request.args.get('device_id', type=str)
         if device_id is None:
             # Device id not found in parameters.
             return Response("Device id is required.", status=403)

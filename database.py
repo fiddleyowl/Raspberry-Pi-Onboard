@@ -94,3 +94,20 @@ def get_certificate(device_id):
     if not is_user_valid(device_id):
         return ""
     return get_user_data(device_id)[4]
+
+
+def log_operation(system_time, remote_ip, raw_request, query_time, type, device_id, operation):
+    sql_query = ("INSERT INTO `log` "
+             "(system_time, remote_ip, raw_request, query_time, type, device_id, operation, result) "
+             "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)")
+    data = (system_time, remote_ip, raw_request, query_time, type, device_id, operation, 0)
+    cnx.cursor().execute(sql_query, data)
+    cnx.commit()
+
+
+def mark_operation_as_succeeded(system_time):
+    sql_query = ("UPDATE `log` "
+                 "SET `result` = 1 "
+                 "WHERE `system_time` = '%s'" % system_time)
+    cnx.cursor().execute(sql_query)
+    cnx.commit()
