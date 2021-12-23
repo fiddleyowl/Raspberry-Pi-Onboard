@@ -63,13 +63,30 @@ def register_user():
 
     pre_shared_secret = request.args.get('pre_shared_secret', type=str)
     certificate = urllib.request.unquote(request.args.get('certificate', type=str))
+
+    if device_type is None:
+        return Response("Device type is required.", status=403)
+    device_type = str(device_type)
+
+    if device_id is None:
+        return Response("Device ID is required.", status=403)
+    device_id = str(device_id)
+
+    if pre_shared_secret is None:
+        return Response("Pre shared secret is required.", status=403)
+    pre_shared_secret = str(pre_shared_secret)
+
+    if certificate is None:
+        return Response("Certificate is required.", status=403)
+    certificate = str(certificate)
+
     if verify_client_certificate(certificate):
         database_add_user(device_type, device_id, pre_shared_secret, certificate)
         mark_operation_as_succeeded(system_time)
-        return "Successfully added user."
+        return "Device registered."
         # return Response("{'status':'0', 'msg':'User added.'}", status=200, mimetype='application/json')
     else:
-        return Response("Failed to add user.", status=403)
+        return Response("Certificate is not valid.", status=403)
         # return Response("{'status':'-1', 'msg':'Information is invalid.'}", status=403, mimetype='application/json')
 
 
