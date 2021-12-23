@@ -152,7 +152,7 @@ def open_door():
             return Response("Device id is required.", status=403)
         device_id = str(device_id)
         certificate = str(get_certificate(device_id))
-        certificate_x509 = load_certificate(FILETYPE_PEM, bytearray(certificate))
+        certificate_x509 = load_certificate(FILETYPE_PEM, bytearray(certificate, "utf-8"))
         common_name = str(certificate_x509.get_subject().cn)
         if common_name != device_id:
             return Response("Common name mismatches.", status=403)
