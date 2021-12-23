@@ -1,5 +1,4 @@
-import hashlib
-import urllib
+import hashlib, urllib
 from binascii import unhexlify
 from threading import Thread
 
@@ -15,7 +14,7 @@ from motor_control import *
 api = Flask(__name__)
 
 
-@api.route('/forward', methods=['GET'])
+# @api.route('/forward', methods=['GET'])
 def forward_move():
     rev_per_second = float(request.args.get('rev', type=float))
     run_time = float(request.args.get('time', type=float))
@@ -24,7 +23,7 @@ def forward_move():
     return "Forward moving."
 
 
-@api.route('/reverse', methods=['GET'])
+# @api.route('/reverse', methods=['GET'])
 def reverse_move():
     rev_per_second = float(request.args.get('rev', type=float))
     run_time = float(request.args.get('time', type=float))
@@ -53,36 +52,25 @@ def move_motor(rev_per_second, run_time, reverse):
 
 @api.route('/register_user', methods=['GET'])
 def register_user():
+    system_time = round(time.time() * 1000)
+    remote_ip = request.remote_addr
+    raw_request = iri_to_uri(request.url)
+
     device_type = request.args.get('type', type=str)
     device_id = request.args.get('device_id', type=str)
+
+    log_operation(system_time, remote_ip, raw_request, None, device_type, device_id, 'register_user')
+
     pre_shared_secret = request.args.get('pre_shared_secret', type=str)
     certificate = urllib.request.unquote(request.args.get('certificate', type=str))
     if verify_client_certificate(certificate):
         database_add_user(device_type, device_id, pre_shared_secret, certificate)
+        mark_operation_as_succeeded(system_time)
         return "Successfully added user."
         # return Response("{'status':'0', 'msg':'User added.'}", status=200, mimetype='application/json')
     else:
-        return "Failed to add user."
+        return Response("Failed to add user.", status=403)
         # return Response("{'status':'-1', 'msg':'Information is invalid.'}", status=403, mimetype='application/json')
-
-
-@api.route('/remove_user', methods=['GET'])
-def remove_user():
-    timestamp = int(request.args.get('timestamp', type=int))
-    current_time = round(time.time() * 1000)
-    if abs(current_time - timestamp) > 10:
-        return Response("Request expired.", status=403)
-
-    signature = str(request.args.get('signature', type=str))
-    device_id = str(request.args.get('device_id', type=str))
-    certificate = str(get_certificate(device_id))
-    pre_shared_secret = str(get_pre_shared_secret(device_id))
-    message = "Remove" + str(timestamp) + device_id + pre_shared_secret
-    if verify_signature(message, signature, certificate):
-        database_remove_user(device_id)
-        return "User removed."
-    else:
-        return "Failed to remove user."
 
 
 @api.route('/enable_user', methods=['GET'])
@@ -181,21 +169,28 @@ def open_door():
 
 @api.route('/deactivate_device', methods=['GET'])
 def deactivate_device():
+    system_time = round(time.time() * 1000)
+    remote_ip = request.remote_addr
+    raw_request = iri_to_uri(request.url)
+
     timestamp = request.args.get('timestamp', type=int)
+    device_type = request.args.get('type', type=str)
+    signature = request.args.get('signature', type=str)
+    device_id = request.args.get('device_id', type=str)
+
+    log_operation(system_time, remote_ip, raw_request, timestamp, device_type, device_id, 'deactivate_device')
+
     if timestamp is None:
         return Response("Time is required.", status=403)
     timestamp = int(timestamp)
 
-    current_time = round(time.time() * 1000)
-    if abs(current_time - timestamp) > 5000:
+    if abs(system_time - timestamp) > 5000:
         return Response("Request expired.", status=403)
 
-    device_type = request.args.get('type', type=str)
     if device_type is None:
         return Response("Device type is required.", status=403)
     device_type = str(device_type)
 
-    signature = request.args.get('signature', type=str)
     if signature is None:
         return Response("Signature is required.", status=403)
     signature = str(signature)
@@ -204,7 +199,6 @@ def deactivate_device():
         # Device type not found.
         return Response("Device type not found.", status=403)
 
-    device_id = request.args.get('device_id', type=str)
     if device_id is None:
         # Device id not found in parameters.
         return Response("Device id is required.", status=403)
@@ -220,6 +214,7 @@ def deactivate_device():
     signature = unhexlify(signature)
     if verify_signature(message, signature, certificate):
         database_remove_user(device_id)
+        mark_operation_as_succeeded(system_time)
         return "Device deactivated."
     else:
         return Response("Signature verification failed.", status=403)
