@@ -94,17 +94,3 @@ def get_certificate(device_id):
     if not is_user_valid(device_id):
         return ""
     return get_user_data(device_id)[4]
-
-
-# def get_e(device_id):
-#     if not is_user_valid(device_id):
-#         return ""
-#     return get_user_data(device_id)[4]
-#
-#
-# def get_n(device_id):
-#     if not is_user_valid(device_id):
-#         return ""
-#     return get_user_data(device_id)[5]
-
-

@@ -17,18 +17,8 @@ api = Flask(__name__)
 def forward_move():
     rev_per_second = float(request.args.get('rev', type=float))
     run_time = float(request.args.get('time', type=float))
-    if rev_per_second < 0:
-        return "rev must be greater than 0."
-    if rev_per_second > 2:
-        return "Too fast!"
-    if run_time < 0:
-        return "run_time must be greater than 0."
-    if run_time > 10:
-        return "Too long!"
-    enable_motor()
-    start_motor(rev_per_second, run_time, False)
-    cleanup_pins()
-    disable_motor()
+    thread = Thread(target=move_motor, args=[rev_per_second, run_time, False])
+    thread.start()
     return "Forward moving."
 
 
@@ -36,6 +26,15 @@ def forward_move():
 def reverse_move():
     rev_per_second = float(request.args.get('rev', type=float))
     run_time = float(request.args.get('time', type=float))
+    thread = Thread(target=move_motor, args=[rev_per_second, run_time, True])
+    thread.start()
+    return "Reverse moving."
+
+
+def move_motor(rev_per_second, run_time, reverse):
+    rev_per_second = float(rev_per_second)
+    run_time = float(run_time)
+    reverse = bool(reverse)
     if rev_per_second < 0:
         return "rev must be greater than 0."
     if rev_per_second > 2:
@@ -45,10 +44,9 @@ def reverse_move():
     if run_time > 10:
         return "Too long!"
     enable_motor()
-    start_motor(rev_per_second, run_time, True)
+    start_motor(rev_per_second, run_time, reverse)
     cleanup_pins()
     disable_motor()
-    return "Reverse moving."
 
 
 @api.route('/register_user', methods=['GET'])
@@ -123,7 +121,7 @@ def open_door():
     if device_type == "Arduino":
         key = unhexlify(config['DEFAULT']['arduino_aes_key'])
         IV = unhexlify(config['DEFAULT']['arduino_aes_iv'])
-        decipher = AES.new(key,AES.MODE_CBC,IV)
+        decipher = AES.new(key, AES.MODE_CBC, IV)
         try:
             cipher_text = unhexlify(signature)
         except:
@@ -133,13 +131,15 @@ def open_door():
         except:
             return Response("Signature is not valid.", status=403)
 
-        calculated_hash = hashlib.sha256(str("Open" + str(timestamp) + get_pre_shared_secret("Arduino")).encode()).hexdigest()
+        calculated_hash = hashlib.sha256(
+            str("Open" + str(timestamp) + get_pre_shared_secret("Arduino")).encode()).hexdigest()
         if plain_text == calculated_hash:
             thread = Thread(target=drive_motor, args=[])
             thread.start()
             return "Door opening."
         else:
-            return Response("Hash mismatches.\nShould be " + calculated_hash + ", but found " + plain_text + ".", status=403)
+            return Response("Hash mismatches.\nShould be " + calculated_hash + ", but found " + plain_text + ".",
+                            status=403)
     else:
         if device_type != "iOS" and device_type != "Android":
             # Device type not found.
@@ -167,6 +167,52 @@ def open_door():
                 return Response("User is disabled.", status=403)
         else:
             return Response("Signature verification failed.", status=403)
+
+
+@api.route('/deactivate_device', methods=['GET'])
+def deactivate_device():
+    timestamp = request.args.get('timestamp', type=int)
+    if timestamp is None:
+        return Response("Time is required.", status=403)
+    timestamp = int(timestamp)
+
+    current_time = round(time.time() * 1000)
+    if abs(current_time - timestamp) > 5000:
+        return Response("Request expired.", status=403)
+
+    device_type = request.args.get('type', type=str)
+    if device_type is None:
+        return Response("Device type is required.", status=403)
+    device_type = str(device_type)
+
+    signature = request.args.get('signature', type=str)
+    if signature is None:
+        return Response("Signature is required.", status=403)
+    signature = str(signature)
+
+    if device_type != "iOS" and device_type != "Android":
+        # Device type not found.
+        return Response("Device type not found.", status=403)
+
+    device_id = request.args.get('device_id', type=str)
+    if device_id is None:
+        # Device id not found in parameters.
+        return Response("Device id is required.", status=403)
+    device_id = str(device_id)
+    certificate = str(get_certificate(device_id))
+    certificate_x509 = load_certificate(FILETYPE_PEM, certificate.encode())
+    common_name = str(certificate_x509.get_subject().CN)
+    if common_name != device_id:
+        return Response("Common name mismatches.", status=403)
+    pre_shared_secret = str(get_pre_shared_secret(device_id))
+    message = "Deactivate" + str(timestamp) + device_id + pre_shared_secret
+    # print(message)
+    signature = unhexlify(signature)
+    if verify_signature(message, signature, certificate):
+        database_remove_user(device_id)
+        return "Device deactivated."
+    else:
+        return Response("Signature verification failed.", status=403)
 
 
 def drive_motor():
