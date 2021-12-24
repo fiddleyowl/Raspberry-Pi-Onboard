@@ -118,24 +118,29 @@ def open_door():
     log_operation(system_time, remote_ip, raw_request, timestamp, device_type, device_id, 'open_door')
 
     if timestamp is None:
+        print("Time is required.")
         return Response("Time is required.", status=403)
     timestamp = int(timestamp)
 
     if device_type is None:
+        print("Device type is required.")
         return Response("Device type is required.", status=403)
     device_type = str(device_type)
 
     if signature is None:
+        print("Signature is required.")
         return Response("Signature is required.", status=403)
     signature = str(signature)
 
     if device_type == "Arduino":
         if abs(system_time - timestamp * 1000) > 5000:
+            print("Request expired.")
             return Response("Request expired.", status=403)
 
         try:
             signature_test = unhexlify(signature)
         except:
+            print("Signature is not a valid hexadecimal string.")
             return Response("Signature is not a valid hexadecimal string.", status=403)
 
         calculated_hash = hashlib.sha256(
@@ -146,7 +151,8 @@ def open_door():
             mark_operation_as_succeeded(system_time)
             return "Door opening."
         else:
-            return Response("Hash mismatches.\nShould be " + calculated_hash + ", but found " + plain_text + ".",
+            print("Hash mismatches.\nShould be " + calculated_hash + ", but found " + signature + ".")
+            return Response("Hash mismatches.\nShould be " + calculated_hash + ", but found " + signature + ".",
                             status=403)
     else:
         if abs(system_time - timestamp) > 5000:
