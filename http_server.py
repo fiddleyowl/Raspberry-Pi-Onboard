@@ -121,9 +121,6 @@ def open_door():
         return Response("Time is required.", status=403)
     timestamp = int(timestamp)
 
-    if abs(system_time - timestamp) > 5000:
-        return Response("Request expired.", status=403)
-
     if device_type is None:
         return Response("Device type is required.", status=403)
     device_type = str(device_type)
@@ -133,21 +130,17 @@ def open_door():
     signature = str(signature)
 
     if device_type == "Arduino":
-        key = unhexlify(config['DEFAULT']['arduino_aes_key'])
-        IV = unhexlify(config['DEFAULT']['arduino_aes_iv'])
-        decipher = AES.new(key, AES.MODE_CBC, IV)
+        if abs(system_time - timestamp * 1000) > 5000:
+            return Response("Request expired.", status=403)
+
         try:
-            cipher_text = unhexlify(signature)
+            signature_test = unhexlify(signature)
         except:
             return Response("Signature is not a valid hexadecimal string.", status=403)
-        try:
-            plain_text = decipher.decrypt(cipher_text).hex()[:64]
-        except:
-            return Response("Signature is not valid.", status=403)
 
         calculated_hash = hashlib.sha256(
             str("Open" + str(timestamp) + get_pre_shared_secret("Arduino")).encode()).hexdigest()
-        if plain_text == calculated_hash:
+        if signature == calculated_hash:
             thread = Thread(target=drive_motor, args=[])
             thread.start()
             mark_operation_as_succeeded(system_time)
@@ -156,6 +149,9 @@ def open_door():
             return Response("Hash mismatches.\nShould be " + calculated_hash + ", but found " + plain_text + ".",
                             status=403)
     else:
+        if abs(system_time - timestamp) > 5000:
+            return Response("Request expired.", status=403)
+
         if device_type != "iOS" and device_type != "Android":
             # Device type not found.
             return Response("Device type not found.", status=403)
